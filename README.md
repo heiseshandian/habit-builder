@@ -32,8 +32,6 @@ lib/
   main.dart
   models/
   services/
-  screens/
-  widgets/
 ```
 
 ## Notes
