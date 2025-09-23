@@ -1,0 +1,99 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# The .vscode folder contains launch configuration and tasks you configure in
+# VS Code which you may wish to be included in version control, so this line
+# is commented out by default.
+#.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# iOS / Xcode
+**/DerivedData/
+*.xcuserstate
+*.xcscmblueprint
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/ephemeral/
+ios/.generated/
+
+# macOS
+macos/Flutter/ephemeral/
+
+# Coverage
+coverage/
+lcov.info
+
+# Firebase / Google services (add manually if used, do NOT commit keys)
+google-services.json
+GoogleService-Info.plist
+
+# Env / secrets
+.env
+.env.*
+secrets.json
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# Crashlytics / symbol files
+**/crashlytics-build.properties
+**/fabric.properties
+
+# Generated plugin registrant backups
+**/GeneratedPluginRegistrant.*.dart
+
+# Local VSCode settings (keep workspace settings optional)
+.vscode/*.*
+!.vscode/extensions.json
+!.vscode/settings.sample.json
+
+# Misc tooling
+.fvm/
+fvm_config.json
+
+# Logs
+*.coverage
+profile.txt
+debug.log
+
