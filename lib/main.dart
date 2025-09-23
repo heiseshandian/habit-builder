@@ -195,14 +195,13 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                     setState(() {});
                   },
                   child: ListTile(
-                    leading: const Text('✓', style: TextStyle(fontSize: 24)),
                     title: Text(
                         TimeOfDay.fromDateTime(e.timestamp).format(context)),
                     trailing: e.avoided
-                        ? const Text('/', style: TextStyle(fontSize: 32))
+                        ? const Text('✅', style: TextStyle(fontSize: 28))
                         : IconButton(
                             icon:
-                                const Text('/', style: TextStyle(fontSize: 32)),
+                                const Text('❌', style: TextStyle(fontSize: 28)),
                             onPressed: () => _addAvoid(i),
                           ),
                   ),
