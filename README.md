@@ -20,14 +20,14 @@ A minimal Flutter habit breaking tracker using an "index card" metaphor. Track u
 
 ## Getting Started
 
-```
+```sh
 flutter pub get
 flutter run
 ```
 
 ## Structure
 
-```
+```text
 lib/
   main.dart
   models/
