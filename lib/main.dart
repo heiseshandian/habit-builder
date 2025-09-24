@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'services/habit_store.dart';
 import 'models/habit.dart';
+import 'history_screen.dart';
 
 void main() {
   runApp(const HabitApp());
@@ -140,7 +141,24 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
     final habit = widget.habit;
     final events = habit.events;
     return Scaffold(
-      appBar: AppBar(title: Text(habit.title)),
+      appBar: AppBar(
+        title: Text(habit.title),
+        actions: [
+          IconButton(
+            tooltip: 'History',
+            icon: const Icon(Icons.history),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => HabitHistoryScreen(
+                  habit: habit,
+                  store: widget.store,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
       body: Column(
         children: [
           Padding(
