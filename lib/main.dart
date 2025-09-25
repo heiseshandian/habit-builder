@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'services/habit_store.dart';
 import 'models/habit.dart';
 import 'history_screen.dart';
+import 'sync_settings_screen.dart';
 
 void main() {
   runApp(const HabitApp());
@@ -85,7 +86,16 @@ class _HabitListScreenState extends State<HabitListScreen> {
   Widget build(BuildContext context) {
     final habits = widget.store.habits;
     return Scaffold(
-      appBar: AppBar(title: const Text('Habits')),
+      appBar: AppBar(title: const Text('Habits'), actions: [
+        IconButton(
+            tooltip: 'Sync / Settings',
+            onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => SyncSettingsScreen(store: widget.store)),
+                ).then((_) => setState(() {})),
+            icon: const Icon(Icons.sync)),
+      ]),
       body: ListView.builder(
         itemCount: habits.length,
         itemBuilder: (context, i) {
