@@ -1,6 +1,8 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:math';
+import 'dart:async';
 import '../models/habit.dart';
+import 'remote_sync.dart';
 
 class HabitStore {
   static const _key = 'habits_v1';
@@ -11,6 +13,9 @@ class HabitStore {
   String? gistId; // GitHub Gist ID
   String? githubToken; // Personal access token (classic, gist scope)
   DateTime? lastSynced; // last successful sync time
+  RemoteSyncService? _remote; // attached remote service for auto sync
+  Timer? _uploadDebounce;
+  bool _uploadInProgress = false;
 
   List<Habit> get habits => _habits;
 
@@ -74,6 +79,7 @@ class HabitStore {
     );
     _habits.add(habit);
     await save();
+    _scheduleAutoUpload();
     return habit;
   }
 
@@ -81,21 +87,25 @@ class HabitStore {
     habit.rotateIfNeeded(DateTime.now());
     habit.addUrge();
     await save();
+    _scheduleAutoUpload();
   }
 
   Future<void> addAvoid(Habit habit, int index) async {
     habit.addAvoidSuccess(index);
     await save();
+    _scheduleAutoUpload();
   }
 
   Future<void> deleteEvent(Habit habit, int index) async {
     habit.removeEventAt(index);
     await save();
+    _scheduleAutoUpload();
   }
 
   Future<void> renameHabit(Habit habit, String newTitle) async {
     habit.title = newTitle;
     await save();
+    _scheduleAutoUpload();
   }
 
   String _genId() {
@@ -109,5 +119,39 @@ class HabitStore {
   void updateAuth({String? token, String? gist}) {
     if (token != null) githubToken = token;
     if (gist != null) gistId = gist;
+  }
+
+  void attachRemote(RemoteSyncService remote) {
+    _remote = remote;
+  }
+
+  void _scheduleAutoUpload() {
+    if (!canSync || _remote == null) return;
+    // Coalesce rapid successive changes (10s debounce)
+    _uploadDebounce?.cancel();
+    _uploadDebounce = Timer(const Duration(seconds: 10), () async {
+      if (_uploadInProgress) return; // skip if still running previous
+      _uploadInProgress = true;
+      try {
+        await _remote!.upload(this);
+      } catch (_) {
+        // swallow errors silently for now; could surface later
+      } finally {
+        _uploadInProgress = false;
+      }
+    });
+  }
+
+  Future<void> autoDownloadIfConfigured() async {
+    if (!canSync || gistId == null || _remote == null) return;
+    try {
+      await _remote!.download(this);
+    } catch (_) {
+      // ignore failures (stay with local data)
+    }
+  }
+
+  void dispose() {
+    _uploadDebounce?.cancel();
   }
 }

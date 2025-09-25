@@ -3,6 +3,7 @@ import 'services/habit_store.dart';
 import 'models/habit.dart';
 import 'history_screen.dart';
 import 'sync_settings_screen.dart';
+import 'services/remote_sync.dart';
 
 void main() {
   runApp(const HabitApp());
@@ -18,12 +19,18 @@ class HabitApp extends StatefulWidget {
 class _HabitAppState extends State<HabitApp> {
   final store = HabitStore();
   bool _loaded = false;
+  final _remote = RemoteSyncService();
 
   @override
   void initState() {
     super.initState();
-    store.load().then((_) {
-      setState(() => _loaded = true);
+    store.attachRemote(_remote);
+    store.load().then((_) async {
+      // Attempt auto download (will silently ignore errors)
+      await store.autoDownloadIfConfigured();
+      if (mounted) {
+        setState(() => _loaded = true);
+      }
     });
   }
 
