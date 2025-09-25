@@ -127,9 +127,9 @@ class HabitStore {
 
   void _scheduleAutoUpload() {
     if (!canSync || _remote == null) return;
-    // Coalesce rapid successive changes (10s debounce)
+    // Coalesce rapid successive changes (2s debounce)
     _uploadDebounce?.cancel();
-    _uploadDebounce = Timer(const Duration(seconds: 10), () async {
+    _uploadDebounce = Timer(const Duration(seconds: 2), () async {
       if (_uploadInProgress) return; // skip if still running previous
       _uploadInProgress = true;
       try {
