@@ -160,7 +160,7 @@ class _SyncSettingsScreenState extends State<SyncSettingsScreen> {
                 style: TextStyle(fontWeight: FontWeight.bold)),
             const Text(
                 '• Automatic download happens once at startup if configured.'),
-            const Text('• Automatic upload after edits (debounced ~2s).'),
+            const Text('• Automatic upload after edits (debounced ~1s).'),
             const Text('• Last writer wins (no merge of concurrent edits).'),
             const Text(
                 '• Token stored locally in plain text (SharedPreferences).'),
