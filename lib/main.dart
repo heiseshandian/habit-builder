@@ -156,7 +156,7 @@ class _HabitListScreenState extends State<HabitListScreen> {
                     controller: weeklyGoalController,
                     keyboardType: TextInputType.number,
                     decoration: const InputDecoration(
-                        labelText: 'Weekly Goal (days, optional)',
+                        labelText: 'Weekly Goal (days, required)',
                         hintText: 'e.g. 4'),
                   ),
                 const SizedBox(height: 8),
@@ -186,8 +186,24 @@ class _HabitListScreenState extends State<HabitListScreen> {
     if (ok == true) {
       final title = titleController.text.trim();
       if (title.isNotEmpty) {
-        final daily = int.tryParse(goalController.text.trim());
-        final weekly = int.tryParse(weeklyGoalController.text.trim());
+        int? daily = int.tryParse(goalController.text.trim());
+        int? weekly = int.tryParse(weeklyGoalController.text.trim());
+
+        if (frequency == BuildFrequency.daily) {
+          // Default to 1 if not provided or invalid / <=0
+          daily = (daily == null || daily <= 0) ? 1 : daily;
+        } else {
+          // Weekly must be provided and >0; if invalid show error and abort
+          if (weekly == null || weekly <= 0) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                content: Text('Weekly goal required (must be > 0).'),
+              ));
+            }
+            return; // abort creation
+          }
+        }
+
         await widget.store.addHabit(
           title,
           kind: HabitKind.build,

@@ -70,6 +70,17 @@ class HabitStore {
       int? dailyGoal,
       int? weeklyGoal,
       BuildFrequency buildFrequency = BuildFrequency.daily}) async {
+    // Enforce defaults/requirements at store level too (defensive)
+    if (kind == HabitKind.build) {
+      if (buildFrequency == BuildFrequency.daily) {
+        dailyGoal = (dailyGoal == null || dailyGoal <= 0) ? 1 : dailyGoal;
+      } else {
+        if (weeklyGoal == null || weeklyGoal <= 0) {
+          // Fallback: set to 1 to avoid invalid zero goal; UI should prevent this
+          weeklyGoal = 1;
+        }
+      }
+    }
     final habit = Habit(
       id: _genId(),
       title: title,
