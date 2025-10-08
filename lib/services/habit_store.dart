@@ -65,7 +65,11 @@ class HabitStore {
     }
   }
 
-  Future<Habit> addHabit(String title) async {
+  Future<Habit> addHabit(String title,
+      {HabitKind kind = HabitKind.avoid,
+      int? dailyGoal,
+      int? weeklyGoal,
+      BuildFrequency buildFrequency = BuildFrequency.daily}) async {
     final habit = Habit(
       id: _genId(),
       title: title,
@@ -76,6 +80,10 @@ class HabitStore {
         DateTime.now().day,
       ),
       history: [],
+      kind: kind,
+      dailyGoal: dailyGoal,
+      weeklyGoal: weeklyGoal,
+      buildFrequency: buildFrequency,
     );
     _habits.add(habit);
     await save();
@@ -86,6 +94,13 @@ class HabitStore {
   Future<void> addUrge(Habit habit) async {
     habit.rotateIfNeeded(DateTime.now());
     habit.addUrge();
+    await save();
+    _scheduleAutoUpload();
+  }
+
+  Future<void> addCompletion(Habit habit) async {
+    habit.rotateIfNeeded(DateTime.now());
+    habit.addCompletion();
     await save();
     _scheduleAutoUpload();
   }
@@ -104,6 +119,12 @@ class HabitStore {
 
   Future<void> renameHabit(Habit habit, String newTitle) async {
     habit.title = newTitle;
+    await save();
+    _scheduleAutoUpload();
+  }
+
+  Future<void> deleteHabit(Habit habit) async {
+    _habits.removeWhere((h) => h.id == habit.id);
     await save();
     _scheduleAutoUpload();
   }
