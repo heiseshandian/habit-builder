@@ -229,9 +229,11 @@ class _HabitListScreenState extends State<HabitListScreen> {
         final completedDays = h.currentWeekCompletedDays();
         final goal = h.weeklyGoal ?? 0;
         final pct = (h.successRate * 100).clamp(0, 100).toStringAsFixed(0);
-        return goal == 0
+        final reached = goal > 0 && completedDays >= goal;
+        final base = goal == 0
             ? '$completedDays days this week'
             : '$completedDays/${goal.clamp(0, 7)} days • $pct%';
+        return reached ? '$base ⭐' : base;
       }
     }
     return '${h.totalAvoids}/${h.totalUrges} avoided today';
@@ -530,7 +532,8 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
       final days = habit.currentWeekCompletedDays();
       final goal = habit.weeklyGoal ?? 0;
       if (goal == 0) return 'Days this week: $days';
-      return 'Week: $days/${goal.clamp(0, 7)} days';
+      final reached = days >= goal;
+      return 'Week: $days/${goal.clamp(0, 7)} days${reached ? ' ⭐' : ''}';
     }
   }
 

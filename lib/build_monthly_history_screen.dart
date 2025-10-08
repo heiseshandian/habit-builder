@@ -128,7 +128,7 @@ class _BuildMonthlyHistoryScreenState extends State<BuildMonthlyHistoryScreen> {
                         style: const TextStyle(fontWeight: FontWeight.bold)),
                     Text(weeklyGoal == 0
                         ? '$completedDayCount days'
-                        : '$completedDayCount/${weeklyGoal.clamp(0, 7)} days'),
+                        : '$completedDayCount/${weeklyGoal.clamp(0, 7)} days${completedDayCount >= weeklyGoal ? ' ⭐' : ''}'),
                   ],
                 ),
                 const SizedBox(height: 4),
