@@ -120,33 +120,37 @@ class Habit {
     final startToday = DateTime(now.year, now.month, now.day);
     final startCurrent = DateTime(day.year, day.month, day.day);
     if (startToday.isAfter(startCurrent)) {
-      // push summary. For build habits we store goal as total 'urges' and completions as 'avoids'
-      if (kind == HabitKind.build &&
-          buildFrequency == BuildFrequency.daily &&
-          dailyGoal != null &&
-          dailyGoal! > 0) {
-        history.add(
-          DailySummary(
-            day: startCurrent,
-            urges: dailyGoal!,
-            avoids: totalUrges, // completions
-          ),
-        );
-      } else if (kind == HabitKind.build &&
-          buildFrequency == BuildFrequency.weekly) {
-        // For weekly build store raw completions both fields
-        history.add(
-          DailySummary(
-            day: startCurrent,
-            urges: totalUrges,
-            avoids: totalUrges,
-          ),
-        );
-      } else {
-        history.add(
-          DailySummary(
-              day: startCurrent, urges: totalUrges, avoids: totalAvoids),
-        );
+      // Only create a summary if there was any activity that day (events not empty).
+      // Avoid storing 0/0 "empty" days in history to reduce clutter.
+      if (events.isNotEmpty) {
+        // push summary. For build habits we store goal as total 'urges' and completions as 'avoids'
+        if (kind == HabitKind.build &&
+            buildFrequency == BuildFrequency.daily &&
+            dailyGoal != null &&
+            dailyGoal! > 0) {
+          history.add(
+            DailySummary(
+              day: startCurrent,
+              urges: dailyGoal!,
+              avoids: totalUrges, // completions
+            ),
+          );
+        } else if (kind == HabitKind.build &&
+            buildFrequency == BuildFrequency.weekly) {
+          // For weekly build store raw completions both fields
+          history.add(
+            DailySummary(
+              day: startCurrent,
+              urges: totalUrges,
+              avoids: totalUrges,
+            ),
+          );
+        } else {
+          history.add(
+            DailySummary(
+                day: startCurrent, urges: totalUrges, avoids: totalAvoids),
+          );
+        }
       }
       events.clear();
       day = startToday;
