@@ -12,7 +12,9 @@ class HabitStore {
   // Remote sync metadata
   String? gistId; // GitHub Gist ID
   String? githubToken; // Personal access token (classic, gist scope)
-  DateTime? lastSynced; // last successful sync time
+  DateTime? lastSynced; // last successful successful remote sync time
+  DateTime localVersion =
+      DateTime.now(); // monotonic timestamp for local dataset changes
   RemoteSyncService? _remote; // attached remote service for auto sync
   Timer? _uploadDebounce;
   bool _uploadInProgress = false;
@@ -29,7 +31,7 @@ class HabitStore {
         _habits = [];
       }
     }
-    // load sync metadata
+    // load sync metadata (gistId|token|lastSynced|localVersion?)
     final syncRaw = prefs.getString(_syncKey);
     if (syncRaw != null) {
       try {
@@ -38,6 +40,10 @@ class HabitStore {
         githubToken = parts.length > 1 && parts[1].isNotEmpty ? parts[1] : null;
         if (parts.length > 2 && parts[2].isNotEmpty) {
           lastSynced = DateTime.tryParse(parts[2]);
+        }
+        if (parts.length > 3 && parts[3].isNotEmpty) {
+          final parsed = DateTime.tryParse(parts[3]);
+          if (parsed != null) localVersion = parsed;
         }
       } catch (_) {
         gistId = null;
@@ -53,7 +59,8 @@ class HabitStore {
     final meta = [
       gistId ?? '',
       githubToken ?? '',
-      lastSynced?.toIso8601String() ?? ''
+      lastSynced?.toIso8601String() ?? '',
+      localVersion.toIso8601String(),
     ].join('|');
     await prefs.setString(_syncKey, meta);
   }
@@ -97,6 +104,7 @@ class HabitStore {
       buildFrequency: buildFrequency,
     );
     _habits.add(habit);
+    _bumpVersion();
     await save();
     _scheduleAutoUpload();
     return habit;
@@ -105,6 +113,7 @@ class HabitStore {
   Future<void> addUrge(Habit habit) async {
     habit.rotateIfNeeded(DateTime.now());
     habit.addUrge();
+    _bumpVersion();
     await save();
     _scheduleAutoUpload();
   }
@@ -112,30 +121,35 @@ class HabitStore {
   Future<void> addCompletion(Habit habit) async {
     habit.rotateIfNeeded(DateTime.now());
     habit.addCompletion();
+    _bumpVersion();
     await save();
     _scheduleAutoUpload();
   }
 
   Future<void> addAvoid(Habit habit, int index) async {
     habit.addAvoidSuccess(index);
+    _bumpVersion();
     await save();
     _scheduleAutoUpload();
   }
 
   Future<void> deleteEvent(Habit habit, int index) async {
     habit.removeEventAt(index);
+    _bumpVersion();
     await save();
     _scheduleAutoUpload();
   }
 
   Future<void> renameHabit(Habit habit, String newTitle) async {
     habit.title = newTitle;
+    _bumpVersion();
     await save();
     _scheduleAutoUpload();
   }
 
   Future<void> deleteHabit(Habit habit) async {
     _habits.removeWhere((h) => h.id == habit.id);
+    _bumpVersion();
     await save();
     _scheduleAutoUpload();
   }
@@ -185,5 +199,16 @@ class HabitStore {
 
   void dispose() {
     _uploadDebounce?.cancel();
+  }
+
+  void _bumpVersion() {
+    // Monotonic bump; ensure always strictly increasing even if clock skew.
+    final now = DateTime.now();
+    if (now.isAfter(localVersion)) {
+      localVersion = now;
+    } else {
+      // if called multiple times within same millisecond, add 1 microsecond
+      localVersion = localVersion.add(const Duration(microseconds: 1));
+    }
   }
 }

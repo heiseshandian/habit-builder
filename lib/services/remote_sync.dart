@@ -12,7 +12,10 @@ class RemoteSyncService {
     if (!store.canSync) {
       throw Exception('Missing GitHub token');
     }
-    final body = encodeHabits(store.habits);
+    final payload = jsonEncode({
+      'version': store.localVersion.toIso8601String(),
+      'habits': jsonDecode(encodeHabits(store.habits)),
+    });
     if (store.gistId == null) {
       // create new private gist
       final res = await http.post(
@@ -22,7 +25,7 @@ class RemoteSyncService {
           'description': 'Habit Builder sync',
           'public': false,
           'files': {
-            filename: {'content': body}
+            filename: {'content': payload}
           },
         }),
       );
@@ -40,7 +43,7 @@ class RemoteSyncService {
         headers: _headers(store.githubToken!),
         body: jsonEncode({
           'files': {
-            filename: {'content': body}
+            filename: {'content': payload}
           },
         }),
       );
@@ -74,12 +77,45 @@ class RemoteSyncService {
         throw Exception('Remote gist missing $filename');
       }
       try {
-        final habits = decodeHabits(content);
-        store.habits
-          ..clear()
-          ..addAll(habits);
-        store.lastSynced = DateTime.now();
-        await store.save();
+        // Parse remote payload (new format) or fallback to legacy array
+        DateTime? remoteVersion;
+        List<Habit> remoteHabits;
+        final decoded = jsonDecode(content);
+        if (decoded is Map<String, dynamic> && decoded.containsKey('habits')) {
+          if (decoded['version'] is String) {
+            remoteVersion = DateTime.tryParse(decoded['version'] as String);
+          }
+          remoteHabits = (decoded['habits'] as List<dynamic>)
+              .map((e) => Habit.fromJson(e as Map<String, dynamic>))
+              .toList();
+        } else if (decoded is List<dynamic>) {
+          // legacy content: raw habits list
+          remoteHabits = decoded
+              .map((e) => Habit.fromJson(e as Map<String, dynamic>))
+              .toList();
+        } else {
+          throw Exception('Unexpected remote data format');
+        }
+
+        // Conflict resolution: only replace if remote is newer.
+        final shouldApply =
+            remoteVersion == null || remoteVersion.isAfter(store.localVersion);
+        if (shouldApply) {
+          store.habits
+            ..clear()
+            ..addAll(remoteHabits);
+          // adopt remote version if present else bump
+          if (remoteVersion != null) {
+            store.localVersion = remoteVersion;
+          } else {
+            store.localVersion = DateTime.now();
+          }
+          store.lastSynced = DateTime.now();
+          await store.save();
+        } else {
+          // Local newer -> trigger an upload to push our state (no overwrite)
+          await upload(store);
+        }
       } catch (e) {
         throw Exception('Failed to parse remote data: $e');
       }
