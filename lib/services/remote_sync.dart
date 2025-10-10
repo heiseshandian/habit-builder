@@ -111,7 +111,18 @@ class RemoteSyncService {
             store.localVersion = DateTime.now();
           }
           store.lastSynced = DateTime.now();
+          // Persist the downloaded state first.
           await store.save();
+          // After adopting remote state, ensure we rotate if the date changed
+          // since the remote snapshot (e.g., opening the app the next day and
+          // remote still contains "today" events from yesterday).
+          final rotated = _postDownloadRotate(store);
+          if (rotated) {
+            // Bump version so future downloads won't overwrite the rotated
+            // history with stale un-rotated data.
+            store.localVersion = DateTime.now();
+            await store.save();
+          }
         } else {
           // Local newer -> trigger an upload to push our state (no overwrite)
           await upload(store);
@@ -124,6 +135,18 @@ class RemoteSyncService {
     } else {
       throw Exception('Failed to fetch gist (${res.statusCode})');
     }
+  }
+
+  // Rotate all habits after download if needed (date boundary crossed).
+  bool _postDownloadRotate(HabitStore store) {
+    final now = DateTime.now();
+    bool rotated = false;
+    for (final h in store.habits) {
+      final before = h.day;
+      h.rotateIfNeeded(now);
+      if (before != h.day) rotated = true;
+    }
+    return rotated;
   }
 
   Map<String, String> _headers(String token) => {

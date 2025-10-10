@@ -50,7 +50,13 @@ class HabitStore {
         githubToken = null;
       }
     }
-    _rotateAll();
+    final rotated = _rotateAll();
+    // If we performed a rotation, bump version & persist so remote sync logic
+    // will treat local dataset as newer than any old un-rotated remote copy.
+    if (rotated) {
+      _bumpVersion();
+      await save();
+    }
   }
 
   Future<void> save() async {
@@ -65,11 +71,15 @@ class HabitStore {
     await prefs.setString(_syncKey, meta);
   }
 
-  void _rotateAll() {
+  bool _rotateAll() {
     final now = DateTime.now();
+    bool rotated = false;
     for (final h in _habits) {
+      final before = h.day;
       h.rotateIfNeeded(now);
+      if (before != h.day) rotated = true;
     }
+    return rotated;
   }
 
   Future<Habit> addHabit(String title,
